@@ -1,5 +1,5 @@
 # Mikian Musser
-# github/mm909
+# https://github.com/mm909/autogen2
 
 """             DISCLAMER FROM AUTHOR             """
 ''' Please make sure your tests also pass autogen '''
@@ -8,6 +8,7 @@
 
 import os
 import glob
+import argparse
 from progress import *
 
 """ CHANGE """
@@ -15,10 +16,51 @@ BADTESTS  = "/home/mussem1/460/Tests/Phase4/Espresso/BadTests/*"
 GOODTESTS = "/home/mussem1/460/Tests/Phase4/Espresso/GoodTests/*"
 """ CHANGE """
 
-badTests  = (glob.glob(BADTESTS))
-goodTests = (glob.glob(GOODTESTS))
+parser = argparse.ArgumentParser(
+                                 description = 'autogen2 built for phase 4 CS460',
+                                 epilog = "autogen2 - https://github.com/mm909/autogen2"
+                                )
 
-# Compile before every run, error if needed
+parser.add_argument(
+                               '-nocomp',
+                     dest    = 'compCLA',
+                     action  = 'store_false',
+                     default = True,
+                     help    = 'Does not compile with ant before running.'
+                    )
+
+parser.add_argument(
+                               '-all',
+                     dest    = 'allCLA',
+                     action  = 'store_true',
+                     default = False,
+                     help    = 'Runs all tests (Good and Bad).'
+                    )
+
+parser.add_argument(
+                               '-good',
+                     dest    = 'goodCLA',
+                     action  = 'store_true',
+                     default = False,
+                     help    = 'Runs all good tests.'
+                    )
+
+parser.add_argument(
+                               '-bad',
+                     dest    = 'badCLA',
+                     action  = 'store_true',
+                     default = False,
+                     help    = 'Runs all bad tests.'
+                    )
+
+args = parser.parse_args()
+
+if not (args.badCLA or args.goodCLA or args.allCLA):
+    print("\n\tMust select a set of tests: -good | -bad | -all\n")
+    exit()
+
+""" ant   : Compile with ant """
+""" output: Errors if needed """
 def ant():
     print("\nCompiling...")
     os.system('ant clean > antcleanmessages.txt')
@@ -31,10 +73,20 @@ def ant():
             exit()
     os.system('clear')
     print("\nCompile: BUILD SUCCESSFUL")
-ant()
 
-print("\nGlobing BAD tests  : " + BADTESTS)
-print("Globing GOOD tests : " + GOODTESTS + "\n")
+if args.compCLA:
+    ant()
+else:
+    print("\nCompiling Skipped.")
+
+print('\n')
+if args.allCLA or args.goodCLA:
+    goodTests = (glob.glob(GOODTESTS))
+    print("Globing GOOD tests : " + GOODTESTS)
+if args.allCLA or args.badCLA:
+    badTests  = (glob.glob(BADTESTS))
+    print("Globing BAD tests  : " + BADTESTS)
+print('\n')
 
 
 """ testGood : Run all good tests     """
@@ -131,5 +183,7 @@ def testBad():
     else:
         print("              No Errors.\n")
 
-testGood()
-testBad()
+if args.allCLA or args.goodCLA:
+    testGood()
+if args.allCLA or args.badCLA:
+    testBad()
