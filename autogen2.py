@@ -12,8 +12,10 @@ import argparse
 from progress import *
 
 """ CHANGE """
-BADTESTS  = "/home/mussem1/460/Tests/Phase4/Espresso/BadTests/*"
-GOODTESTS = "/home/mussem1/460/Tests/Phase4/Espresso/GoodTests/*"
+BADTESTS      = "/home/mussem1/460/Tests/Phase4/Espresso/BadTests/*"
+GOODTESTS     = "/home/mussem1/460/Tests/Phase4/Espresso/GoodTests/*"
+BADTESTSPLUS  = "/home/mussem1/460/Tests/Phase4/Espresso+/BadTests/*"
+GOODTESTSPLUS = "/home/mussem1/460/Tests/Phase4/Espresso+/GoodTests/*"
 """ CHANGE """
 
 parser = argparse.ArgumentParser(
@@ -27,6 +29,14 @@ parser.add_argument(
                      action  = 'store_false',
                      default = True,
                      help    = 'Does not compile with ant before running.'
+                    )
+
+parser.add_argument(
+                               '-plus',
+                     dest    = 'plusCLA',
+                     action  = 'store_true',
+                     default = False,
+                     help    = 'Run espresso plus test.'
                     )
 
 parser.add_argument(
@@ -53,16 +63,38 @@ parser.add_argument(
                      help    = 'Runs all bad tests.'
                     )
 
+parser.add_argument(
+                               '-sg',
+                     dest    = 'sgCLA',
+                     action  = 'store',
+                     default = "",
+                     help    = 'Tests a single \'good\' file.'
+                    )
+
+parser.add_argument(
+                               '-sb',
+                     dest    = 'sbCLA',
+                     action  = 'store',
+                     default = "",
+                     help    = 'Tests a single \'bad\' file.'
+                    )
+
 args = parser.parse_args()
 
-if not (args.badCLA or args.goodCLA or args.allCLA):
-    print("\n\tMust select a set of tests: -good | -bad | -all\n")
+if not (args.badCLA or args.goodCLA or args.allCLA or args.sgCLA != "" or args.sbCLA != ""):
+    print("\n\tMust select one of the following: \n\t -good \n\t -bad \n\t -all \n\t -sg|-sb [File] \n")
     exit()
+
+if args.sgCLA != "" or args.sgCLA != "" :
+    tempSplit = args.sgCLA.split('.')[1]
+    if(tempSplit != "java"):
+        print("\n\tGiven file must be .java\n")
+        exit()
 
 """ ant   : Compile with ant """
 """ output: Errors if needed """
 def ant():
-    print("\nCompiling...")
+    print("\n Compiling...")
     os.system('ant clean > antcleanmessages.txt')
     os.system('ant > antmessages.txt')
     f=open("antmessages.txt", "r")
@@ -72,27 +104,55 @@ def ant():
             print(contents)
             exit()
     os.system('clear')
-    print("\nCompile: BUILD SUCCESSFUL")
+    print("\n Compile: BUILD SUCCESSFUL")
 
 if args.compCLA:
     ant()
 else:
-    print("\nCompiling Skipped.")
+    os.system('clear')
+    print("\n Compiling Skipped.")
 
-print('\n')
+if not (args.sgCLA != "" or args.sbCLA != ""):
+    print('\n')
+
 if args.allCLA or args.goodCLA:
-    goodTests = (glob.glob(GOODTESTS))
-    print("Globing GOOD tests : " + GOODTESTS)
+    if not args.plusCLA:
+        goodTests = (glob.glob(GOODTESTS))
+        print(" Globing GOOD tests : " + GOODTESTS)
+    else:
+        goodTests = (glob.glob(GOODTESTSPLUS))
+        print(" Globing GOOD tests : " + GOODTESTSPLUS)
 if args.allCLA or args.badCLA:
-    badTests  = (glob.glob(BADTESTS))
-    print("Globing BAD tests  : " + BADTESTS)
-print('\n')
+    if not args.plusCLA:
+        badTests  = (glob.glob(BADTESTS))
+        print(" Globing BAD tests  : " + BADTESTS)
+    else:
+        badTests  = (glob.glob(BADTESTSPLUS))
+        print(" Globing BAD tests  : " + BADTESTSPLUS)
 
+
+if not (args.sgCLA != "" or args.sbCLA != ""):
+    print('\n')
+
+""" Tests a single good file """
+def testGood(file):
+    print("\n Running Good Test on: " + file)
+    os.system('./espressoc '+ file +' > mine 2> /dev/null')
+    os.system('./espressocr '+ file +' > his 2> /dev/null')
+    os.system('diff mine his > differences.txt')
+
+    f = open("differences.txt", "r")
+    if f.mode == 'r':
+        contents = f.read()
+        if contents != "":
+            print("\n\tFailed\n")
+        else:
+            print("\n\tPassed\n")
 
 """ testGood : Run all good tests     """
 """ output   : Count of passed/failed """
 """ output   : Failed file names      """
-def testGood():
+def testGoodAll():
     passed = []
     failed = []
     print("       -- Running Good Tests -- ")
@@ -102,9 +162,9 @@ def testGood():
             os.system('./espressocr '+ test +' > his 2> /dev/null')
             os.system('diff mine his > differences.txt')
 
-            f=open("differences.txt", "r")
+            f = open("differences.txt", "r")
             if f.mode == 'r':
-                contents =f.read()
+                contents = f.read()
                 if contents != "":
                     failed.append(test)
                 else:
@@ -124,10 +184,46 @@ def testGood():
         else:
             print("\n              All Passed.\n")
 
+""" Tests a single bad file """
+def testBad(file):
+    print("\n Running Bad Test on: " + file)
+    os.system('./espressoc ' + file + ' > mine 2> /dev/null')
+    os.system('./espressocr ' + file + ' > his 2> /dev/null ')
+    os.system('diff mine his > differences.txt')
+
+    myOutput = open("mine", "r")
+    myOutputText = myOutput.read()
+    myOutputTextList = myOutputText.split("\n")
+    lastLine = "";
+    for string in myOutputTextList[len(myOutputTextList) - 2].split(" ")[1:]:
+        lastLine = lastLine + string + " "
+        pass
+    myFinal = lastLine
+    if "S = U = C = C = E = S = S" in myOutputText:
+        myFinal = "*** Finished without ERROR ***"
+
+    hisOutput = open("his", "r")
+    hisOutputText = hisOutput.read()
+    hisOutputTextList = hisOutputText.split("\n")
+    lastLine = "";
+    for string in hisOutputTextList[len(hisOutputTextList) - 2].split(" ")[1:]:
+        lastLine = lastLine + string + " "
+        pass
+    hisFinal = lastLine
+
+    if myFinal == hisFinal:
+        print("\n\tPassed\n")
+    else:
+        print("\n\tFailed " + file + ":")
+        print("\t\tMine > " + myFinal)
+        print("\t\tHis  > " + hisFinal)
+        print("\n")
+
+
 """ testBad : Run all bad tests      """
 """ output  : Our error message      """
 """ output  : His error message      """
-def testBad():
+def testBadAll():
     passed = []
     failed = []
     ourMessages = []
@@ -159,7 +255,7 @@ def testBad():
                 pass
             hisFinal = lastLine
 
-            if(myFinal == hisFinal):
+            if myFinal == hisFinal:
                 passed.append(test)
             else:
                 failed.append(test)
@@ -181,9 +277,13 @@ def testBad():
             print("\t\tHis  > " + hisMessages[i])
             print("\n")
     else:
-        print("              No Errors.\n")
+        print("              All Passed.\n")
 
 if args.allCLA or args.goodCLA:
-    testGood()
+    testGoodAll()
 if args.allCLA or args.badCLA:
-    testBad()
+    testBadAll()
+if args.sgCLA != "":
+    testGood(args.sgCLA)
+if args.sbCLA != "":
+    testBad(args.sbCLA)
