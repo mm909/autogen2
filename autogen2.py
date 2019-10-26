@@ -145,7 +145,7 @@ def testGood(file):
     if f.mode == 'r':
         contents = f.read()
         if contents != "":
-            print("\n\tFailed\n")
+            print("\n\tFailed - 'cat differences.txt [mine] [his]'\n")
         else:
             print("\n\tPassed\n")
 
