@@ -1,6 +1,11 @@
 # Mikian Musser
 # github/mm909
 
+"""             DISCLAMER FROM AUTHOR             """
+''' Please make sure your tests also pass autogen '''
+'''     Only use this to help your development    '''
+"""             DISCLAMER FROM AUTHOR             """
+
 import os
 import glob
 from progress import *
@@ -58,7 +63,7 @@ def testGood():
         if(len(failed) > 0):
             print("\n\n\tPassed : " + str(len(passed)))
             print("\tFailed : " + str(len(failed)))
-            print("\n\tFiles Failed: ")
+            print("\n\tFailed: ")
             for fail in failed:
                 faillist = fail.split('/')
                 print("\t\t" + faillist[len(faillist) - 1])
@@ -86,19 +91,19 @@ def testBad():
             myOutputText = myOutput.read()
             myOutputTextList = myOutputText.split("\n")
             lastLine = "";
-            for str in myOutputTextList[len(myOutputTextList) - 2].split(" ")[1:]:
-                lastLine = lastLine + str + " "
+            for string in myOutputTextList[len(myOutputTextList) - 2].split(" ")[1:]:
+                lastLine = lastLine + string + " "
                 pass
             myFinal = lastLine
-            if("S = U = C = C = E = S = S" in myFinal):
+            if "S = U = C = C = E = S = S" in myFinal:
                 myFinal = "*** Finished without ERROR ***"
 
             hisOutput = open("his", "r")
             hisOutputText = hisOutput.read()
             hisOutputTextList = hisOutputText.split("\n")
             lastLine = "";
-            for str in hisOutputTextList[len(hisOutputTextList) - 2].split(" ")[1:]:
-                lastLine = lastLine + str + " "
+            for string in hisOutputTextList[len(hisOutputTextList) - 2].split(" ")[1:]:
+                lastLine = lastLine + string + " "
                 pass
             hisFinal = lastLine
 
@@ -112,7 +117,10 @@ def testBad():
             pbar.next()
             pbar.update()
 
+
     if(len(ourMessages) != 0):
+        print("\n\tPassed : " + str(len(passed)))
+        print("\tFailed : " + str(len(failed)))
         print("\n")
         for i,message in enumerate(ourMessages):
             faillist = failed[i].split('/')
